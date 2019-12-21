@@ -15,6 +15,7 @@ namespace MongoBackuper.Controllers
         // GET api/backup
         [HttpGet]
         public ActionResult<string> Get() {
+            // можно использовать для проверки состояния сервиса
             return "Service OK!";
         }
 
