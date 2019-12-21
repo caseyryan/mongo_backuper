@@ -1,8 +1,13 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using Services;
 
 namespace MongoBackuper
 {
@@ -20,14 +25,36 @@ namespace MongoBackuper
 
         public void ConfigureServices(IServiceCollection services) 
         {
+
+            var jwtSecretBytes = Encoding.ASCII.GetBytes(Configuration["JwtSecret"]);
+
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_1);
+            services.AddAuthentication(options => 
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                }).AddJwtBearer(options => {
+                    // сам токен генерируется в JwtTokenProvider
+                    options.SaveToken = true;
+                    options.TokenValidationParameters = new TokenValidationParameters 
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(jwtSecretBytes),
+                        ValidateLifetime = false,
+                        RequireExpirationTime = true,
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidIssuer = Configuration["Issuer"],
+                        ValidAudience = Configuration["Audience"],
+                    };
+                });
             services.AddHostedService<BackupService>();
-            services.AddSingleton(new JWTTokenProvider());
+            services.AddSingleton<ITokenService, JwtTokenService>();
         }
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-
             Environment = env;
 
             if (env.IsDevelopment())
@@ -38,8 +65,11 @@ namespace MongoBackuper
             {
                 app.UseHsts();
             }
+            app.UseAuthentication();
+            app.UseStaticFiles();
             app.UseHttpsRedirection();
             app.UseMvc();
+            
         }
     }
 }

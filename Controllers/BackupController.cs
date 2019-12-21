@@ -1,25 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Controllers.Dto;
 using Enums;
 using Extensions;
 using Microsoft.AspNetCore.Mvc;
 
-namespace MongoBackuper.Controllers
+namespace Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class BackupController : ControllerBase
+    public class BackupController
     {
-        // GET api/backup
+        /// GET api/backup
         [HttpGet]
         public ActionResult<string> Get() {
             // можно использовать для проверки состояния сервиса
             return "Service OK!";
         }
 
-        // POST api/backup/now
+        /// POST api/backup/now
         [HttpPost("Now")]
         public async Task<string> Now([FromBody] BackupDto dto)
         {   
@@ -32,7 +31,7 @@ namespace MongoBackuper.Controllers
             }.ToJson();
         }
 
-        // POST api/backup/list
+        /// POST api/backup/list
         [HttpPost("List")]
         public async Task<string> List([FromBody] BackupDto dto)
         {   
@@ -46,7 +45,7 @@ namespace MongoBackuper.Controllers
         }
 
         /// удаляет локальную копию базы с указанным именем файла
-        // DELETE api/backup/bkp_12_06_2019
+        /// DELETE api/backup/bkp_12_06_2019
         [HttpDelete("{name}")]
         public void Delete(string name)
         {
