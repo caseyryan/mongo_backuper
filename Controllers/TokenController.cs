@@ -1,11 +1,11 @@
 ﻿using System;
-using System.Net;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Controllers.Dto;
+using Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Services;
 
 namespace Controllers
@@ -16,10 +16,10 @@ namespace Controllers
     {
         // для генерации нужного типа токена по запросу
         // по умолчанию инжектится JWTTokenProvider
-        private ITokenService TokenService { get; set; }
+        private readonly ITokenService m_TokenService;
 
         public TokenController(ITokenService tokenService) {
-            TokenService = tokenService;
+            m_TokenService = tokenService;
             Console.WriteLine("TOKEN SERVICE " + tokenService);
         }
 
@@ -35,7 +35,13 @@ namespace Controllers
 
         [HttpPost("CredentialsToken")]
         public async Task<string> CredentialsToken([FromBody] AuthDto dto) {
-            return await TokenService.GenerateByCredentials(dto.Username, dto.Password);
+            if (string.IsNullOrWhiteSpace(dto.Login) || string.IsNullOrWhiteSpace(dto.Password)) {
+                return new Dictionary<string, object>() {
+                    { "result", "failure"},
+                    { "reason", "Логин или пароль не верны" }
+                }.ToJson();
+            }
+            return await m_TokenService.GenerateByCredentials(dto.Login, dto.Password);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -49,7 +50,10 @@ namespace MongoBackuper
                         ValidAudience = Configuration["Audience"],
                     };
                 });
-            services.AddHostedService<BackupService>();
+            // services.AddHostedService<BackupService>();
+            services.AddSingleton<BackupService>();
+            services.AddHostedService<BackupService>(provider => provider.GetService<BackupService>());
+
             services.AddSingleton<ITokenService, JwtTokenService>();
         }
 

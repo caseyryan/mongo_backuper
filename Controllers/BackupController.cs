@@ -1,9 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Controllers.Dto;
 using Enums;
 using Extensions;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Services;
 
 namespace Controllers
 {
@@ -11,6 +14,16 @@ namespace Controllers
     [ApiController]
     public class BackupController
     {
+
+
+        private readonly ILogger m_Logger;
+        private readonly BackupService m_BackupService;
+        // public BackupController(ILoggerFactory loggerFactory, BackupService backupService) {
+        public BackupController(ILoggerFactory loggerFactory, BackupService backupService) {
+            m_Logger = loggerFactory.CreateLogger(GetType().Name);
+            m_BackupService = backupService;
+        }
+
         /// GET api/backup
         [HttpGet]
         public ActionResult<string> Get() {
@@ -22,8 +35,13 @@ namespace Controllers
         [HttpPost("Now")]
         public async Task<string> Now([FromBody] BackupDto dto)
         {   
-            StorageType storageType = dto.StorageType.ToEnum<StorageType>();
-            
+            StorageType storageType;
+            if (string.IsNullOrWhiteSpace(dto.StorageType)) {
+                storageType = StorageType.Local;
+            } else {
+                storageType = dto.StorageType.ToEnum<StorageType>();
+            }
+
 
             return new Dictionary<string, object>() {
                 { "result", "failure"},
@@ -35,13 +53,13 @@ namespace Controllers
         [HttpPost("List")]
         public async Task<string> List([FromBody] BackupDto dto)
         {   
-            StorageType storageType = dto.StorageType.ToEnum<StorageType>();
-            
-
-            return new Dictionary<string, object>() {
-                { "result", "failure"},
-                { "reason", $"Не удалось вывести список архивов для хранилища {storageType}" }
-            }.ToJson();
+            StorageType storageType;
+            if (string.IsNullOrWhiteSpace(dto.StorageType)) {
+                storageType = StorageType.Local;
+            } else {
+                storageType = dto.StorageType.ToEnum<StorageType>();
+            }
+            return m_BackupService.GetBackupsListingAsJson();
         }
 
         /// удаляет локальную копию базы с указанным именем файла
